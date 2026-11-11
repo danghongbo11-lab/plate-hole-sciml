@@ -9,3 +9,10 @@
 *.lck
 __pycache__/
 *.pyc
+*.pt
+.venv/
+venv/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
