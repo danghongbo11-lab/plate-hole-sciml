@@ -3,14 +3,14 @@ from torch.utils.data import DataLoader,TensorDataset
 from neuralop.models import FNO
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__))); OUT=os.path.dirname(os.path.abspath(__file__)); d=np.load(os.path.join(ROOT,'fno_dataset.npz'))
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__))); OUT=os.path.dirname(os.path.abspath(__file__)); d=np.load(os.path.join(ROOT,'data','fno_dataset.npz'))
 R,X,Y,M,U1,U2=[d[k] for k in ['R','X','Y','mask','U1','U2']]; order=np.argsort(R); R,M,U1,U2=R[order],M[order],U1[order],U2[order]
 test=[5,15,25,35,45]; val=[8,18,28,38,48]; train=[i for i in range(51) if i not in test+val]; Nx=64; Ny=32; dx=4/(Nx-1); dy=2/(Ny-1)
 Xn=2*X/4-1; Yn=2*Y/2-1; Rn=2*(R-.2)/.15-1; tr=M[train]>0; u1m=U1[train][tr].mean(); u1s=U1[train][tr].std(); u2m=U2[train][tr].mean(); u2s=U2[train][tr].std()
 def inp(ii): return np.stack([np.broadcast_to(Xn,(len(ii),Ny,Nx)),np.broadcast_to(Yn,(len(ii),Ny,Nx)),M[ii],np.broadcast_to(Rn[ii,None,None],(len(ii),Ny,Nx))],1)
 def tgt(ii): return np.stack([(U1[ii]-u1m)/u1s,(U2[ii]-u2m)/u2s],1)
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'); model=FNO(n_modes=(12,12),hidden_channels=32,in_channels=4,out_channels=2,n_layers=4).to(device)
-ck=torch.load(os.path.join(ROOT,'fno_baseline','best_fno.pt'),map_location=device,weights_only=False); model.load_state_dict(ck['model'])
+ck=torch.load(os.path.join(ROOT,'fno','best_fno.pt'),map_location=device,weights_only=False); model.load_state_dict(ck['model'])
 opt=torch.optim.AdamW(model.parameters(),lr=2e-4,weight_decay=1e-4); dl=DataLoader(TensorDataset(torch.tensor(inp(train),dtype=torch.float32),torch.tensor(tgt(train),dtype=torch.float32),torch.tensor(M[train,None],dtype=torch.float32)),batch_size=8,shuffle=False)
 def physics(p,m,rr):
  u=p[:,0]*u1s+u1m; v=p[:,1]*u2s+u2m; s11=(u[:,:,2:]-u[:,:,:-2])/(2*dx); s11=s11[:,1:-1]; s22=(v[:,2:,:]-v[:,:-2,:])/(2*dy); s22=s22[:,:,1:-1]; s12=(u[:,2:,1:-1]-u[:,:-2,1:-1])/(2*dy)+(v[:,1:-1,2:]-v[:,1:-1,:-2])/(2*dx); s11=1/(1-.3**2)*((u[:,:,2:]-u[:,:,:-2])/(2*dx)+.3*(v[:,2:,1:-1]-v[:,:-2,1:-1])/(2*dy)); rx=(s11[:,:,2:]-s11[:,:,:-2])/(2*dx)+(s12[:,1:-1,2:]-s12[:,1:-1,:-2])/(2*dy); ry=(s12[:,1:-1,2:]-s12[:,1:-1,:-2])/(2*dx)+(s22[:,2:,1:-1]-s22[:,:-2,1:-1])/(2*dy); valid=m[:,:,1:-1,1:-1]*m[:,:,1:-1,2:]*m[:,:,1:-1,:-2]*m[:,:,2:,1:-1]*m[:,:,:-2,1:-1]; valid=valid[:,:,1:-1,1:-1]; pl=((rx**2+ry**2)*valid).sum()/valid.sum().clamp_min(1); return pl
