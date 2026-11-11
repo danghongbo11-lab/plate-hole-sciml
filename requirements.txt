@@ -1,5 +1,8 @@
 numpy
 scipy
+pandas
 matplotlib
 gmsh
 scikit-fem
+torch
+neuraloperator
