@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader,TensorDataset
 from neuralop.models import FNO
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__))); OUT=os.path.dirname(os.path.abspath(__file__)); d=np.load(os.path.join(ROOT,'fno_dataset.npz'))
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__))); OUT=os.path.dirname(os.path.abspath(__file__)); d=np.load(os.path.join(ROOT,'data','fno_dataset.npz'))
 R,X,Y,mask,U1,U2=[d[k] for k in ['R','X','Y','mask','U1','U2']]
 assert R.shape==(51,) and X.shape==(32,64) and Y.shape==(32,64) and mask.shape==(51,32,64) and U1.shape==(51,32,64) and U2.shape==(51,32,64)
 assert np.isnan(U1).sum()+np.isnan(U2).sum()+np.isinf(U1).sum()+np.isinf(U2).sum()==0
